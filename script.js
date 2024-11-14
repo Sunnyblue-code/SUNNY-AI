@@ -1,4 +1,8 @@
-import API_KEY from "./config.js";
+// Remove this line
+// import API_KEY from "./config.js";
+
+// Add API key directly or from a global variable
+const API_KEY = window.config.API_KEY; // We'll define this in config.js
 
 const chatBox = document.getElementById("chat-box");
 const userInput = document.getElementById("user-input");
