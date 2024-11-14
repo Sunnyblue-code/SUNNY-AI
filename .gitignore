@@ -1,15 +1,14 @@
 # Node modules
 node_modules/
 
-# Environment variables and config files
+# Private environment files
 .env
-config.js
+private-config.js
 
 # Logs
 logs/
 *.log
 yarn-debug.log*
-
 
 # OS generated files
 .DS_Store
