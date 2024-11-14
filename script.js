@@ -4,37 +4,39 @@
 // Add API key directly or from a global variable
 const API_KEY = window.config.API_KEY; // We'll define this in config.js
 
-// Wrap all initialization code in DOMContentLoaded
-document.addEventListener("DOMContentLoaded", function () {
-  const chatBox = document.getElementById("chat-box");
-  const userInput = document.getElementById("user-input");
-  const sendButton = document.getElementById("send-button");
-  const clearButton = document.getElementById("clear-button");
-  const toggleButton = document.getElementById("toggle-button");
-  const chatContainer = document.querySelector(".chat-container");
+// Initialize global variables
+let chatBox, userInput, sendButton, clearButton, toggleButton, chatContainer;
 
-  // Event Listeners
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", function () {
+  // Get DOM elements
+  chatBox = document.getElementById("chat-box");
+  userInput = document.getElementById("user-input");
+  sendButton = document.getElementById("send-button");
+  clearButton = document.getElementById("clear-button");
+  toggleButton = document.getElementById("toggle-button");
+  chatContainer = document.querySelector(".chat-container");
+
+  // Add event listeners
   if (sendButton) {
-    sendButton.addEventListener("click", handleSubmit);
+    sendButton.onclick = handleSubmit;
   }
 
   if (userInput) {
-    userInput.addEventListener("keypress", (e) => {
+    userInput.onkeypress = (e) => {
       if (e.key === "Enter") handleSubmit();
-    });
+    };
   }
 
   if (clearButton) {
-    clearButton.addEventListener("click", clearChat);
+    clearButton.onclick = clearChat;
   }
 
-  if (toggleButton && chatContainer) {
-    toggleButton.addEventListener("click", () => {
-      chatContainer.classList.toggle("hidden");
-    });
+  if (toggleButton) {
+    toggleButton.onclick = () => chatContainer.classList.toggle("hidden");
   }
 
-  // Load chat history
+  // Load initial chat history
   loadChatHistory();
 });
 
@@ -135,13 +137,14 @@ function addLoadingIndicator() {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// Update handleSubmit to use direct API key
 async function handleSubmit() {
-  const userMessage = userInput.value.trim();
-  if (!userMessage) return;
+  const message = userInput?.value.trim();
+  if (!message || !chatBox) return;
 
   // Display user message
-  addMessage(userMessage, true);
-  userInput.value = "";
+  addMessage(message, true);
+  if (userInput) userInput.value = "";
 
   // Show loading indicator
   addLoadingIndicator();
@@ -153,31 +156,33 @@ async function handleSubmit() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`,
+          Authorization: `Bearer ${
+            window.config?.API_KEY || "your-api-key-here"
+          }`,
         },
         body: JSON.stringify({
           model: "llama3-8b-8192",
-          messages: [{ role: "user", content: userMessage }],
+          messages: [{ role: "user", content: message }],
         }),
       }
     );
 
+    if (!response.ok) throw new Error("API request failed");
+
     const data = await response.json();
 
-    // Remove loading indicator
-    const loadingIndicator = document.getElementById("loading");
-    if (loadingIndicator) loadingIndicator.remove();
+    // Remove loading
+    document.getElementById("loading")?.remove();
 
-    // Display bot response with typewriter effect
-    if (data.choices && data.choices.length > 0) {
+    // Add response
+    if (data.choices?.[0]?.message?.content) {
       addMessage(data.choices[0].message.content, false);
     } else {
-      addMessage("Sorry, I couldn't respond.", false);
+      addMessage("Sorry, I couldn't generate a response.", false);
     }
   } catch (error) {
     console.error("Error:", error);
-    const loadingIndicator = document.getElementById("loading");
-    if (loadingIndicator) loadingIndicator.remove();
+    document.getElementById("loading")?.remove();
     addMessage("Sorry, there was an error processing your request.", false);
   }
 }

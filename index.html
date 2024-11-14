@@ -31,9 +31,19 @@
         </div>
     </div>
     <button id="toggle-button" class="toggle-button">Toggle Chat</button>
-    <!-- Update script loading -->
-    <script defer src="config.js"></script>
-    <script defer src="script.js"></script>
+
+    <!-- Add error handling for config -->
+    <script>
+        window.config = window.config || { API_KEY: 'your-api-key-here' };
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            console.error('Error: ', msg, url, lineNo, columnNo, error);
+            return false;
+        };
+    </script>
+
+    <!-- Load scripts with error handling -->
+    <script defer src="config.js" onerror="console.error('Failed to load config.js')"></script>
+    <script defer src="script.js" onerror="console.error('Failed to load script.js')"></script>
 </body>
 
 </html>
