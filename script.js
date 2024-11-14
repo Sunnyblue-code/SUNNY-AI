@@ -4,10 +4,39 @@
 // Add API key directly or from a global variable
 const API_KEY = window.config.API_KEY; // We'll define this in config.js
 
-const chatBox = document.getElementById("chat-box");
-const userInput = document.getElementById("user-input");
-const sendButton = document.getElementById("send-button");
-const clearButton = document.getElementById("clear-button");
+// Wrap all initialization code in DOMContentLoaded
+document.addEventListener("DOMContentLoaded", function () {
+  const chatBox = document.getElementById("chat-box");
+  const userInput = document.getElementById("user-input");
+  const sendButton = document.getElementById("send-button");
+  const clearButton = document.getElementById("clear-button");
+  const toggleButton = document.getElementById("toggle-button");
+  const chatContainer = document.querySelector(".chat-container");
+
+  // Event Listeners
+  if (sendButton) {
+    sendButton.addEventListener("click", handleSubmit);
+  }
+
+  if (userInput) {
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleSubmit();
+    });
+  }
+
+  if (clearButton) {
+    clearButton.addEventListener("click", clearChat);
+  }
+
+  if (toggleButton && chatContainer) {
+    toggleButton.addEventListener("click", () => {
+      chatContainer.classList.toggle("hidden");
+    });
+  }
+
+  // Load chat history
+  loadChatHistory();
+});
 
 // Load chat history from localStorage
 function loadChatHistory() {
@@ -157,20 +186,3 @@ function clearChat() {
   chatBox.innerHTML = "";
   localStorage.removeItem("chatHistory");
 }
-
-// Event Listeners
-sendButton.addEventListener("click", handleSubmit);
-userInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") handleSubmit();
-});
-clearButton.addEventListener("click", clearChat);
-
-const toggleButton = document.getElementById("toggle-button");
-const chatContainer = document.querySelector(".chat-container");
-
-toggleButton.addEventListener("click", () => {
-  chatContainer.classList.toggle("hidden");
-});
-
-// Load chat history when the page loads
-document.addEventListener("DOMContentLoaded", loadChatHistory);
