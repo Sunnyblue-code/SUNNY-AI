@@ -6,6 +6,8 @@ const API_KEY = window.config.API_KEY; // We'll define this in config.js
 
 // Initialize global variables
 let chatBox, userInput, sendButton, clearButton, toggleButton, chatContainer;
+let isTyping = false;
+let currentTypingTimeout = null; // Add this with other global variables
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", function () {
@@ -14,8 +16,8 @@ document.addEventListener("DOMContentLoaded", function () {
   userInput = document.getElementById("user-input");
   sendButton = document.getElementById("send-button");
   clearButton = document.getElementById("clear-button");
-  toggleButton = document.getElementById("toggle-button");
   chatContainer = document.querySelector(".chat-container");
+  const stopButton = document.getElementById("stop-button");
 
   // Add event listeners
   if (sendButton) {
@@ -32,8 +34,8 @@ document.addEventListener("DOMContentLoaded", function () {
     clearButton.onclick = clearChat;
   }
 
-  if (toggleButton) {
-    toggleButton.onclick = () => chatContainer.classList.toggle("hidden");
+  if (stopButton) {
+    stopButton.onclick = stopTyping;
   }
 
   // Load initial chat history
@@ -93,14 +95,24 @@ function addDateSeparator(date) {
 function typeWriter(element, text, speed = 30) {
   let i = 0;
   element.textContent = "";
+  isTyping = true;
 
   function type() {
-    if (i < text.length) {
+    if (i < text.length && isTyping) {
       element.textContent += text.charAt(i);
       i++;
-      setTimeout(type, speed);
+
+      // Force scroll on each character
+      requestAnimationFrame(() => {
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
+
+      // Store timeout reference
+      currentTypingTimeout = setTimeout(type, speed);
     } else {
-      // Save chat history after typing is complete
+      // Complete or stopped
+      isTyping = false;
+      currentTypingTimeout = null;
       saveChatHistory();
     }
   }
@@ -108,26 +120,17 @@ function typeWriter(element, text, speed = 30) {
   type();
 }
 
-function addMessage(content, isUser, timestamp = new Date()) {
-  addDateSeparator(timestamp);
-
-  const messageDiv = document.createElement("div");
-  messageDiv.className = `message ${isUser ? "user-message" : "bot-message"}`;
-  messageDiv.dataset.timestamp = timestamp.toISOString();
-
-  chatBox.appendChild(messageDiv);
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-  if (isUser) {
-    messageDiv.textContent = content;
+function stopTyping() {
+  if (isTyping) {
+    isTyping = false;
+    if (currentTypingTimeout) {
+      clearTimeout(currentTypingTimeout);
+      currentTypingTimeout = null;
+    }
     saveChatHistory();
-  } else {
-    // Use typewriter effect for bot messages
-    typeWriter(messageDiv, content);
   }
 }
 
-// Add loading indicator
 function addLoadingIndicator() {
   const loading = document.createElement("div");
   loading.className = "message bot-message";
@@ -190,4 +193,26 @@ async function handleSubmit() {
 function clearChat() {
   chatBox.innerHTML = "";
   localStorage.removeItem("chatHistory");
+}
+
+function addMessage(content, isUser, timestamp = new Date()) {
+  addDateSeparator(timestamp);
+
+  const messageDiv = document.createElement("div");
+  messageDiv.className = `message ${isUser ? "user-message" : "bot-message"}`;
+  messageDiv.dataset.timestamp = timestamp.toISOString();
+
+  chatBox.appendChild(messageDiv);
+
+  // Force immediate scroll
+  requestAnimationFrame(() => {
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
+
+  if (isUser) {
+    messageDiv.textContent = content;
+    saveChatHistory();
+  } else {
+    typeWriter(messageDiv, content);
+  }
 }
